@@ -1,0 +1,119 @@
+
+Issue 1
+
+https://help.mulesoft.com/s/question/0D72T000003s3gfSAA/string-to-xml-conversion-in-mule-4
+
+Solution:
+%dw 2.0
+output application/xml---
+read(payload, "application/xml")
+
+
+Issue2
+
+https://help.mulesoft.com/s/question/0D72T000003s0RySAI/how-to-define-hardcoded-values-in-data-weave-during-xml-to-json-transformation
+
+Solution: if condition
+
+Issue 3
+https://help.mulesoft.com/s/question/0D72T000003u43YSAQ/unable-to-transform-xml-to-json
+Solution: worked properly
+
+
+Issue 4
+
+https://help.mulesoft.com/s/question/0D72T000003rmEoSAI/dataweave-transformation-mule-4
+
+Solution:
+newBook: {(payload.bookstore.*book map (object)->{
+    newName: object.name,
+    newTitle: object.title
+}
+)}
+
+
+Issue 5
+https://help.mulesoft.com/s/question/0D72T000003sckDSAQ/how-can-i-transform-any-type-of-data-into-xml-format
+
+Solution:
+Xml should have single root element and all other elements should be enclosed within the root element.
+
+
+Issue 6
+https://help.mulesoft.com/s/question/0D72T000003rozNSAQ/dataweave-remove-self-closing-xml-tag
+
+Solution:
+%dw 2.0
+output application/xml
+---
+payload.SOAPENVBody
+
+
+Issue 7
+https://help.mulesoft.com/s/question/0D72T000003rlVmSAI/json-array-to-xml-in-mule-39-gives-error
+
+Solution:
+%dw 2.0
+output application/xml
+---
+student:{
+    name: payload.name,
+    Age: payload.age,
+    level: payload.level,
+    gender: payload.gender,
+    status: payload.status,
+    subjects:{( payload.subjects map(ob)->
+    {
+        subject:
+        {
+            subjectName: ob.subjectName,
+            subjectCode: ob.subjectCode,
+            subjectLevel: ob.subjectLevel
+        }
+    }
+
+    )
+    }
+}
+
+
+Issue 8
+https://help.mulesoft.com/s/question/0D72T000000f7G6SAI/i-am-trying-to-convert-xml-to-json-but-getting-error
+
+Solution:
+%dw 2.0
+output application/json
+var num1 = payload.Envelope.Body.getSum.number1
+var num2 = payload.Envelope.Body.getSum.number2
+var num3 = num1 + num2
+---
+Addition: num3
+
+
+Issue 9
+https://help.mulesoft.com/s/question/0D72T000003vYhKSAU/im-trying-read-a-xml-file-and-convert-it-to-json-after-converting-json-im-planing-to-send-json-data-to-http-get-request-as-a-result-in-a-flow-i-readed-that-xml-and-when-i-write-it-console-with-logger-everthing-is-fine-i-can-see-json-format-output
+
+Solution
+With flow reference data can be send to other flow, if transformation is successful and there is a data available, it can be send to another flow.
+
+
+Issue 10
+https://help.mulesoft.com/s/question/0D72T000003wAhmSAE/mulesoft-exception-at-transform-message-javaxxmlstreamxmlstreamexception-trying-to-write-enddocument-when-document-has-no-root-ie-trying-to-output-empty-document-javaioioexception
+
+Solution:
+%dw 2.0
+output application/java
+---
+BillingAccountDetails:{(payload..BillingAccountDetails map (ob)->{
+    AccountId: ob.AccountId,
+    Street: ob.Street,
+    City: ob.City,
+    State: ob.State,
+    ZipCode: ob.ZipCode,
+}
+)} 
+
+
+
+
+
