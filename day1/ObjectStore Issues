@@ -1,0 +1,87 @@
+
+Issue 1
+
+https://help.mulesoft.com/s/question/0D72T000003rvGdSAI/how-can-we-update-value-of-a-specific-key-in-objectstore
+How can we update the value of a specific key in object store?
+Solution:
+use store method with the same key and updated value
+
+
+Issue 2
+
+https://help.mulesoft.com/s/question/0D72T000003rvIPSAY/not-able-to-retrieve-value-from-object-store-in-different-application
+Storing object store in one application and retrieve value in another application
+Solution:
+Use domain project to configure object store and use the same objectstore in both the applications
+Use anypointQ to transfer data between 2 applications
+
+
+Issue 3
+
+https://help.mulesoft.com/s/question/0D72T000003wE0wSAE/strategy-for-caching-secrets-when-objectstore-10-tps-limit-is-reached
+Wanted to increase the TPS (Transactions per second)
+Solution:
+Maximum TPS is 10
+Pay for an increased TPS..Premium add-on users are allowed up to 100 TPS per app
+Non persistent Object store
+
+
+Issue 4
+
+https://help.mulesoft.com/s/question/0D72T000003s3jcSAA/shared-object-store-using-objectstorev2-in-mule-4
+(1) Is there a way to ignore the 30 days TTL of OSV2?
+(2) Is there a way to enable sharing of an object store and its contents across multiple workers without using ObjectStoreV2?
+Solution:
+the Object Store attributes like entityTTL, max entries etc are ignored by OSv1 and OSv2, as they have their own limits pre-set as part of the platform feature set.
+An Object Store and its contents (keys, values) is accessible to all CloudHub workers of the one Mule application that defines and therefore owns that Object Store. This means that as long as CloudHub workers are of the same application, they can share an Object Store.
+
+
+Issue 5
+
+https://help.mulesoft.com/s/question/0D72T000000fAK1SAM/i-am-using-mule-oauth-20-provider-please-clarify-if-clientids-will-get-deleted-after-30-days-from-the-object-store-even-when-i-am-retrieving-not-updating-them-on-a-regular-basis
+Will data delete after 30 days
+Solution:
+Key time to live is 30 days, and extended by 30 days if updated. TTL is not customisable for Anypoint ObjectStore V2
+
+
+Issue 6
+
+https://help.mulesoft.com/s/question/0D72T000003toyiSAA/how-to-store-jwt-token-value-in-app-registry-till-one-minute
+Solution:
+Use objectstore
+
+
+Issue 7
+
+https://help.mulesoft.com/s/question/0D72T000003xtcySAA/developing-first-api-getting-error-deploy-failed-object-store-v1-is-not-supported-for-your-org
+Deploy failed: Object Store V1 is not supported for your org
+Solution:
+Check ObjectStore V2 while deploying to cloudhub
+Try with any other region like US-WEST or something else. (paid account)
+
+
+Issue 8
+
+https://help.mulesoft.com/s/question/0D72T000003vYiNSAU/how-to-share-object-store-in-onprem-server-group
+How to share object store in on-prem server group
+Solution:
+Not possible in server group..Use cluster
+Otherwise use other options for storing data..do not use Objectstore
+
+
+Issue 9
+
+https://help.mulesoft.com/s/question/0D72T000003s28JSAQ/multiple-keys-in-object-store
+Solution:
+After retrieving value, add a condition to check if a value is already avaialble or not
+
+
+Issue 10
+
+https://help.mulesoft.com/s/question/0D52T00004tts31SAA/how-to-implement-cache-mechanism-for-multiple-workers-without-using-object-store
+Solution:
+Object Store v2 has a base rate of 10tps, you can pay to go higher or you can pay for an external service (e.g. database to store this). Or you can use non-persistent OS which has no sharing between workers, but is unlimited by any TPS constraints
+
+
+
+
