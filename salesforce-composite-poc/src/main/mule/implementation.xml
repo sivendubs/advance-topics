@@ -1,0 +1,345 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:salesforce-composite="http://www.mulesoft.org/schema/mule/salesforce-composite" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/salesforce-composite http://www.mulesoft.org/schema/mule/salesforce-composite/current/mule-salesforce-composite.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+	<flow name="create-object-flow" doc:id="5cf8a3d5-e345-49e0-a61a-613df8b9a9de" >
+		<ee:transform doc:name="Transform Message" doc:id="a7b30155-92f9-49b5-9b60-055af21ca77c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload map ((record , indexOfRecord) -> {
+	"attributes": {
+		"type": record.object,
+		"referenceId": record.referenceId
+	},
+	"Name": record.Name,
+	"Phone": record.Phone,
+	"Website": record.Website,
+	"NumberOfEmployees": record.NumberOfEmployees as Number,
+	("ChildAccounts": {
+		"records": record.ChildAccounts.records map ((record01, indexOfRecord01) -> {
+			"attributes": {
+				"type": record01.object,
+				"referenceId": record01.referenceId
+			},
+			"Name": record01.Name,
+			"Phone": record01.Phone,
+			"Website": record01.Website,
+			"NumberOfEmployees": record01.NumberOfEmployees as Number
+		})
+	}),
+	"Contacts": {
+		"records": record.Contacts.records map ((record01, indexOfRecord01) -> {
+			"attributes": {
+				"type": record01.object,
+				"referenceId": record01.referenceId
+			},
+			"FirstName": record01.FirstName,
+			"LastName": record01.LastName,
+			"Email": record01.Email,
+			"Title": record01.Title
+		})
+	}
+	} )]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce-composite:create-sobject-tree type="Account" doc:name="Create sobject tree" doc:id="e9918ba0-0bd6-4f20-b48e-c27304c6ab6f" config-ref="Salesforce_Composite_Config">
+		</salesforce-composite:create-sobject-tree>
+		<ee:transform doc:name="Transform Message" doc:id="c44fea45-5443-4d99-aef6-c11030c10b49" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="create-sobject-collections-flow" doc:id="62c12456-06cb-4ea9-96ec-9f0d58faef50" >
+		<ee:transform doc:name="Transform Message" doc:id="30eb6e59-235d-4e10-8c40-91b57696cc9b" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	allOrNone: true,
+	records:
+	   payload map (record01,index)->{
+	  
+	   	 "attributes":  {"type": record01.object },
+	   	 (if(record01.object == "Account")
+	   	 	{
+	   	 		"NumberOfEmployees": record01.NumberOfEmployees,
+				"Website" :record01.Website,
+				"Name": record01.Name ,
+				"Phone": record01.Phone 
+	   	 	} 
+	   	 	else 
+	   	 	{
+	   	 		"Title": record01.Title  ,
+    			"FirstName": record01.FirstName ,
+				"LastName":record01.LastName  ,
+				"Description": record01.Description ,
+				"Email": record01.Email ,
+				"Phone": record01.Phone 
+	   	 	}
+	   	 )
+		 		
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce-composite:create-sobject-collections doc:name="Create sobject collections" doc:id="d256c83b-9321-46b4-9c2a-ab5aad99261a" config-ref="Salesforce_Composite_Config"/>
+		<ee:transform doc:name="Transform Message" doc:id="29853330-f4d9-4456-ade4-cccb83de15f9" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="retrieve-object-flow" doc:id="56f728cd-fdd3-4f6b-af0e-8c623530fcfe" >
+		<salesforce-composite:get-sobject-collections type="#[attributes.headers.object]" doc:name="Get sobject collections" doc:id="1e60ff81-2a29-4781-9155-56f81b5c763d" config-ref="Salesforce_Composite_Config" ids="#[payload.id]" fields="#[payload.fields]">
+		</salesforce-composite:get-sobject-collections>
+		<ee:transform doc:name="Transform Message" doc:id="5e4f2289-9d68-4170-a8fb-8fcc78870f7c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="update-object-flow" doc:id="198f8537-2c10-41c3-9d82-796a67326b23" >
+		<ee:transform doc:name="Transform Message" doc:id="2ff21fbf-1cfb-4ead-8786-4d62810465d7" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	allOrNone: true,
+	records:
+	   payload map (record01,index)->
+	   {	
+		"attributes":  {"type": record01.object},
+		"id": record01.id,	
+		
+		 (if(record01.object == "Account")
+		 	{
+		 		(NumberOfEmployees: record01.NumberOfEmployees) if(record01.NumberOfEmployees != null),
+		    	(Website :record01.Website) if(record01.Website != null),
+		    	("Phone": record01.Phone ) if(record01.Phone != null)
+		    }
+		  else
+		  {
+		  	("Title": record01.Title ) if(record01.Title != null),
+			("FirstName": record01.FirstName ) if(record01.FirstName != null),
+			("LastName":record01.LastName ) if(record01.LastName != null),
+			("Description": record01.Description ) if(record01.Description != null),
+			("Email": record01.Email ) if(record01.Email != null),
+			("Phone": record01.Phone ) if(record01.Phone != null)	 
+		  }
+		 )			
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce-composite:update-sobject-collections doc:name="Update sobject collections" doc:id="ec27a625-7e90-490b-a566-1c3e65901c49" config-ref="Salesforce_Composite_Config"/>
+		<ee:transform doc:name="Transform Message" doc:id="df9d4783-6648-4cc1-ae72-3ebf1bae30a3" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="upsert-object-flow" doc:id="ca023f68-522f-481d-bdf2-1d9b23ca047d" >
+		<ee:transform doc:name="Transform Message" doc:id="9f43bbf6-f6c7-4874-9109-8420e137632e" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	allOrNone: true,
+	records:
+	   payload map (record01,index)->
+	   {	
+	   	(if(record01.id == null) 
+	   		{
+	   			"attributes": {
+	   		    "type": record01.object, "referenceId": record01.referenceId
+	   		     }
+	   		}
+	   		else 
+	   		{
+	   			"attributes":  {
+	   			"type": record01.object
+	   			},
+				"id": record01.id
+	   		}
+	   	),	
+		
+		(NumberOfEmployees: record01.NumberOfEmployees) if(record01.NumberOfEmployees != null),
+		(Website :record01.Website) if(record01.Website != null),
+		("Name": record01.Name) if (record01.Name != null),
+		("Title": record01.Title ) if(record01.Title != null),
+    	("FirstName": record01.FirstName ) if(record01.FirstName != null),
+		("LastName":record01.LastName ) if(record01.LastName != null),
+		("Description": record01.Description ) if(record01.Description != null),
+		("Email": record01.Email ) if(record01.Email != null),
+		("Phone": record01.Phone ) if(record01.Phone != null)	 
+		 		
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce-composite:upsert-sobject-collections type="Account" externalFieldName="Id" doc:name="Upsert sobject collections" doc:id="e3b63906-e617-4d90-9714-78049121cc2f" config-ref="Salesforce_Composite_Config"/>
+		<ee:transform doc:name="Transform Message" doc:id="16569174-8424-41fb-b10c-c0f8fee434b3" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="delete-objects-flow" doc:id="e64cec43-d86b-452a-adc6-dc127b2d50fa" >
+		<salesforce-composite:delete-sobject-collections doc:name="Delete sobject collections" doc:id="7a1a92c1-6584-43e3-b97c-dfa49d715698" config-ref="Salesforce_Composite_Config" allOrNone="true" ids="#[payload.id]"/>
+		<ee:transform doc:name="Transform Message" doc:id="1c26f18f-6907-41e0-9dc8-f48088f28e60">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="salesforce-composite-flow" doc:id="f9d059a5-8ac6-48b8-a893-69666a4e73f4" >
+		<http:listener doc:name="Listener" doc:id="59617b1c-89a5-4786-a313-1c35b30037ff" config-ref="HTTP_Listener_config" path="/composite"/>
+		<ee:transform doc:name="Transform Message" doc:id="3ad43781-5044-4264-bc0e-549e282f9a60">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+{
+	allOrNone: false,
+	collateSubrequests: null,
+	compositeRequest: [{
+
+  		 "method" : "POST",
+ 	     "url" : "/services/data/v49.0/sobjects/Account",
+  		 "referenceId" : "refAccount",
+  		 "body" : { "Name" : "Sample Account" }
+  		},
+  		{
+  		 "method" : "POST",
+ 		 "url" : "/services/data/v49.0/sobjects/Contact",
+  		"referenceId" : "refContact",
+ 		 "body" : { 
+ 		 	 "FirstName": "Maria",
+   			 "LastName" : "Alex",
+   			 "AccountId" : "@{refAccount.id}"
+   			 }
+ 		 }]
+
+
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce-composite:execute-composite-request doc:name="Execute composite request" doc:id="5f8a6f82-a791-4a68-9e92-c984f2082576" config-ref="Salesforce_Composite_Config"/>
+		<ee:transform doc:name="Transform Message" doc:id="e4264e58-2fc8-4de3-97d3-d687eea62ed6" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="salesforce-bulk-insert" doc:id="426b2c42-0285-40c4-8fa9-f37a9e8996a0" >
+		<ee:transform doc:name="Transform Message" doc:id="5c78701b-b607-40a5-8291-883007df4827" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/csv
+---
+payload map (record01,index)->{
+	
+	   	 (if(attributes.headers.object == "Account")
+	   	 	{
+	   	 		"NumberOfEmployees": record01.NumberOfEmployees,
+				"Website" :record01.Website,
+				"Name": record01.Name ,
+				"Phone": record01.Phone 
+	   	 	} 
+	   	 	else 
+	   	 	{
+	   	 		"Title": record01.Title  ,
+    			"FirstName": record01.FirstName ,
+				"LastName":record01.LastName  ,
+				"Description": record01.Description ,
+				"Email": record01.Email ,
+				"Phone": record01.Phone 
+	   	 	}
+	   	 )
+		 		
+	}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:create-job-bulk-api-v2 operation="insert" doc:name="BulkInsert" doc:id="b9389d69-849d-48e3-9f12-fd0026d74929" config-ref="Salesforce_Config" objectType="#[attributes.headers.object]"/>
+		<ee:transform doc:name="Transform Message" doc:id="64813977-b7ca-430d-867e-25b88c9f697a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="salesforce-bulk-upsert" doc:id="6f1b291f-a08a-4dda-b046-5c5896bf360d" >
+		<ee:transform doc:name="Transform Message" doc:id="8b77a7cc-6e6b-4b46-ad13-7513a1d2c36c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/csv
+---
+payload map (record01,index)->{
+	(if(attributes.headers.object == "Account")
+	{
+	   ("Id": record01.Id) if(record01.Id != null),
+	  ("NumberOfEmployees": record01.NumberOfEmployees) if (record01.NumberOfEmployees != null),
+	  ("Website" :record01.Website) if(record01.Website != null),
+	  ("Name": record01.Name) if(record01.Name != null) ,
+	  ("Phone": record01.Phone) if(record01.Phone != null)
+	} 
+	else 
+	{
+	   "Id": record01.Id default " ",
+	   "Title": record01.Title default "",
+       "FirstName": record01.FirstName default "",
+	   "LastName":record01.LastName default "" ,
+	   "Email": record01.Email default "",
+	   "Phone": record01.Phone default ""
+	   	 	}
+	   	 )
+		 		
+	}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:create-job-bulk-api-v2 doc:name="upsert" doc:id="0ac9d5ba-c3dd-457c-8d67-054638d7e2b5" config-ref="Salesforce_Config" objectType="#[attributes.headers.object]" operation="upsert" externalIdFieldName="Id"/>
+		<ee:transform doc:name="Transform Message" doc:id="e520f4c7-0aa5-487e-aa06-16b48b9430cd" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
